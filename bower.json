@@ -1,0 +1,19 @@
+{
+  "name": "navigation_simulator",
+  "main": "navigation_simulator.js",
+  "version": "0.0.0",
+  "authors": [
+    "Sung Chiu <sean2449@gmail.com>"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests",
+    "example"
+  ],
+  "dependencies": {
+  }
+}
