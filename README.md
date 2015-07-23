@@ -10,3 +10,9 @@ and then in your index.html, add following four scripts
 <script defer src="bower_components/navigation_simulator/spatial_navigator.js"></script>
 <script defer src="bower_components/navigation_simulator/navigation_simulator.js"></script>
 ```
+
+#Compare the navigation simulator with real tab navigation
+##Mac 
+```
+System Preferences -> Keyboard -> Shortcuts -> All controls
+```
