@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    div {
+      width: 200px;
+      height: 200px;
+      background-color: red;
+      margin: 10px;
+      display: inline-block;
+    }
+
+    div:focus {
+      background-color: blue;
+    }
+
+    div > div {
+      width: 150px;
+      height: 150px;
+      background-color: green;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="test" tabIndex="0"></div>
+  <div></div>
+  <div tabIndex="0"></div>
+  <div></div>
+  <div tabIndex="0"></div>
+  <div></div>
+  <div tabIndex="0"></div>
+  <div></div>
+  <div></div>
+  <div tabIndex="0"></div>
+  <div></div>
+  <div tabIndex="0"></div>
+  <div tabIndex="0"></div>
+  <div tabIndex="0"></div>
+  <div tabIndex="0"></div>
+  <div tabIndex="0"></div>
+  <div tabIndex="0"></div>
+  <div tabIndex="0"></div>
+
+  <script src="evt.js"></script>
+  <script src="key_navigation_adapter.js"></script>
+  <script src="spatial_navigator.js"></script>
+  <script src="navigation_simulator.js"></script>
+</body>
+</html>

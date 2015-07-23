@@ -1,43 +1,80 @@
 (function() {
   var NavigationSimulator = function() {
 
-    // Navigation control from keyboard
+    // body is considered as default navigation container
+    this.spatialNavigators = {};
+    document.body.setAttribute('nav-id', 'body');
+
+    // Keyboard navigation control
     this.keyNavigatorAdapter = new KeyNavigationAdapter();
     this.keyNavigatorAdapter.init();
     this.keyNavigatorAdapter.on('move', this._onMove.bind(this));
 
-    // spatialNavigator will only navigate elements that are focusable
-    this.spatialNavigator = new SpatialNavigator([], {
-      ignoreHiddenElement: true
-    });
-    this.spatialNavigator.on('focus', this._onFocus.bind(this));
-
     // parse DOM tree and add all elements into spatial navigator
     this._scanDomTree(document.body);
-
     this._addDomTreeObservor();
+
+    // trace active spatial navigator
+    this.activeSpatialNavigator = this.spatialNavigators.body;
+
+    // override focus function
     this._overrideFocus();
+
+    // handle the case if a
+    window.addEventListener('focus', function(e) {
+      if (this._isValidElement(e.target)) {
+        var newNav = this._getNavigator(e.target);
+        if (newNav) {
+          this.activeSpatialNavigator = newNav;
+          e.target.focus();
+        } else {
+          console.error(e.target, ' is not navigable.');
+        }
+      }
+    }.bind(this), true);
   };
 
   var nsProto = NavigationSimulator.prototype = {};
 
-  nsProto._scanDomTree = function ns__scanDomTree(root, operation) {
+  nsProto._createSpatialNavigator = function ns__createSpatialNavigator() {
+    var spatialNavigator = new SpatialNavigator([], {
+      ignoreHiddenElement: true
+    });
+    spatialNavigator.on('focus', this._onFocus.bind(this));
+    return spatialNavigator;
+  };
+
+  nsProto._getNavigator = function ns__createSpatialNavigator(element) {
+    var navId = element.getAttribute('nav-id');
+    if (navId) {
+      return this.spatialNavigators[navId] || this._createSpatialNavigator();
+    }
+    return this._getNavigator(element.parentElement);
+  };
+
+  nsProto._scanDomTree = function ns__scanDomTree(root, operation, nav) {
+    var navId = root.getAttribute('nav-id');
+    if (navId) {
+      nav = this.spatialNavigators[navId] || this._createSpatialNavigator();
+      this.spatialNavigators[navId] = nav;
+    }
+
     var childNodes = Array.prototype.slice.call(root.children, 0);
     operation = operation || 'add';
-    this._scanChildNodes(childNodes, operation);
+    this._scanChildNodes(childNodes, operation, nav);
 
     // scan shadow DOM
     if (root.shadowRoot) {
       childNodes = Array.prototype.slice.call(root.shadowRoot.children, 0);
-      this._scanChildNodes(childNodes, operation);
+      this._scanChildNodes(childNodes, operation, nav);
     }
   };
 
-  nsProto._scanChildNodes = function ns__scanChildNodes(childNodes, operation) {
+  nsProto._scanChildNodes = function ns__scanChildNodes(childNodes, operation, nav) {
     childNodes.forEach(function(node) {
       if (this._isValidElement(node)) {
-        this.spatialNavigator[operation](node);
-        this._scanDomTree(node, operation);
+        nav[operation](node);
+        this._scanDomTree(node, operation, nav);
       }
     }.bind(this));
   };
@@ -48,18 +85,26 @@
         var addedNodes = Array.prototype.slice.call(mutation.addedNodes, 0);
         addedNodes.forEach(function(node) {
           if (this._isValidElement(node)) {
-            this.spatialNavigator.add(node);
-            // if tree is modified by innerHTML, only top-most nodes will be observed
-            // need to recursively scan all subtrees
-            this._scanDomTree(node);
+            var nav = this._getNavigator(node);
+            if (nav) {
+              nav.add(node);
+              // if tree is modified by innerHTML, only top-most nodes will be observed
+              // need to recursively scan all subtrees
+              this._scanDomTree(node, 'add', nav);
+            }
           }
         }.bind(this));
 
         var removedNodes = Array.prototype.slice.call(mutation.removedNodes, 0);
         removedNodes.forEach(function(node) {
           if (this._isValidElement(node)) {
-            this.spatialNavigator.remove(node);
-            this._scanDomTree(node, 'remove');
+            var nav = this._getNavigator(node);
+            if (nav) {
+              nav.remove(node);
+              // if tree is modified by innerHTML, only top-most nodes will be observed
+              // need to recursively scan all subtrees
+              this._scanDomTree(node, 'remove', nav);
+            }
           }
         }.bind(this));
       }.bind(this));
@@ -87,27 +132,32 @@
     console.groupEnd();
     console.group('-----------Focus switching-----------');
     console.log('Move: ' + key);
-    this.spatialNavigator.move(key);
+    this.activeSpatialNavigator.move(key);
   };
 
   nsProto._onFocus = function ns__onFocus(element) {
-    console.log('New Focus: ', element);
-    console.groupEnd();
-
-    if (element) {
+    if (element &&
+        element !== document.activeElement) {
+      console.log('New Focus: ', element);
       element.focus();
     }
+    console.groupEnd();
   };
 
   nsProto._overrideFocus = function ns__overrideFocus() {
     var navigationSimulator = this;
     var originalFocus = HTMLElement.prototype.focus;
     HTMLElement.prototype.focus = function() {
-      // prevent recursive
-      if (navigationSimulator.spatialNavigator._focus !== this) {
-        navigationSimulator.spatialNavigator.focus(this);
+      var newNav = navigationSimulator._getNavigator(this);
+      if (newNav) {
+        navigationSimulator.activeSpatialNavigator = newNav;
+      } else {
+        console.error(e.target, ' is not navigable.');
+        return;
       }
+
       originalFocus.call(this);
+      navigationSimulator.activeSpatialNavigator.focus(this);
     };
   };
 

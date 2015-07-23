@@ -455,6 +455,10 @@
       }
     },
 
+    hasElement: function snHasElement(elem) {
+      return !!this._collection.indexOf(elem);
+    },
+
     /**
      * Add an element to traversable set.
      *

@@ -12,7 +12,7 @@ and then in your index.html, add following four scripts
 ```
 
 #Compare the navigation simulator with real tab navigation
-##Mac 
+##Mac
 ```
 System Preferences -> Keyboard -> Shortcuts -> All controls
 ```
